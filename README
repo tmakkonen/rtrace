@@ -1,0 +1,5 @@
+rtrace - a ray tracer implementation for my own amusement
+
+TODO: 
+0. scene description language using json
+1. render something simple with brute force
