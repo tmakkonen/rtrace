@@ -1,1 +1,1 @@
-SUBDIRS=common json_spirit app
+SUBDIRS=json_spirit shapes common app

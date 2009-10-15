@@ -1,5 +1,3 @@
-#                                               -*- Autoconf -*-
-# Process this file with autoconf to produce a configure script.
 AC_INIT([rtrace], [0.1], [tuomo.makkonen@iki.fi])
 AM_INIT_AUTOMAKE
 
@@ -22,5 +20,10 @@ AC_TYPE_UINT64_T
 # Checks for library functions.
 AC_CHECK_FUNCS([sqrt])
 
-AC_CONFIG_FILES([json_spirit/Makefile common/Makefile app/Makefile])
+# Boost check
+CPPFLAGS="${CPPFLAGS} -I/opt/local/include"
+
+AC_CHECK_HEADERS([boost/spirit.hpp], [], [AC_MSG_ERROR([Please install boost libraries.])])
+
+AC_CONFIG_FILES([json_spirit/Makefile common/Makefile app/Makefile shapes/Makefile])
 AC_OUTPUT([Makefile])

@@ -12,7 +12,7 @@
 
 #include "json_spirit_value.h"
 #include "json_spirit_reader.h"
-#include "json_spirit_writer.h"
+//#include "json_spirit_writer.h"
 #include "json_spirit_utils.h"
 
 #endif

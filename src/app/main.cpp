@@ -9,7 +9,7 @@ void usage() {
 
 
 int main(int argc, char **argv) {
-  RTrace::Params params;
+  RTrace::Params *params = new RTrace::Params();;
   
   // command line parser
   char ch;
@@ -17,17 +17,18 @@ int main(int argc, char **argv) {
     switch(ch) {
       case 'h':
         usage();
+        break;
       case 's':
-        params.file = std::string();
+        params->file = std::string(optarg);
+        break;
       default:
         usage();
     }
   }
 
   // check for necessary params
-  if (!params.validate()) {
-    return EXIT_FAILURE;
-  }
+  if (!params->validate()) usage();
+ 
 
   RTrace tracer(params);
 

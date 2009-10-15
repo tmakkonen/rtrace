@@ -2,6 +2,8 @@
 #define RTRACE_H
 
 #include <string>
+#include "sceneparser.h"
+
 using std::string;
 
 class RTrace {
@@ -14,7 +16,7 @@ class RTrace {
     };
     
     //! ctor
-    RTrace(Params &params);
+    RTrace(Params *params);
 
     //! dtor
     ~RTrace() {}
@@ -23,7 +25,10 @@ class RTrace {
     int run();
 
   private:
-
+    
+    Params *m_params;
+    //  Scene *m_scene;
+    
     RTrace() {}
 
 };

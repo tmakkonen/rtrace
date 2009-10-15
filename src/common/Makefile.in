@@ -57,6 +57,10 @@ CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 CXXLD = $(CXX)
 CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 	-o $@
+COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+CCLD = $(CC)
+LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(libcommon_a_SOURCES)
 DIST_SOURCES = $(libcommon_a_SOURCES)
 ETAGS = etags
@@ -155,10 +159,15 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTS = gnu
 noinst_LIBRARIES = libcommon.a
-libcommon_a_SOURCES = sceneparser.cpp
+libcommon_a_SOURCES = \
+										sceneparser.h \
+										sceneparser.cpp \
+										vector.h \
+										ray.h 
+
 AM_CXXFLAGS = -fPIC
-AM_LDFLAGS = -L../json_spirit/ -ljson
-INCLUDES = -I../json_spirit/
+AM_LDFLAGS = -L../json_spirit/ -ljson -L../shapes/ -lshapes
+INCLUDES = -I../json_spirit/ -I../shapes/
 all: all-am
 
 .SUFFIXES:

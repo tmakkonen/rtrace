@@ -1,10 +1,11 @@
 //! \file vector.h
 //! \brief a simple 3D vector implementation
-#ifndef RTRACE_VECTPR_H
+#ifndef RTRACE_VECTOR_H
 #define RTRACE_VECTOR_H 
 
 #include <math.h>
 #include <iostream>
+
 class Vector {
   public:
     Vector(const double x, const float y, const float z) :
@@ -68,11 +69,6 @@ class Vector {
     double x, y, z;
 };
 
-std::ostream& operator <<(std::ostream &out, const Vector &v) {
-  out << "x:" << v.x << " y:" << v.y << " z:" << v.z;
-  return out;
-}
 #endif
-
 // EOF
 // vim: tw=78 sw=2 sts=2

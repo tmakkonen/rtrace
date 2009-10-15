@@ -58,6 +58,10 @@ CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 CXXLD = $(CXX)
 CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 	-o $@
+COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+CCLD = $(CC)
+LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(libjson_a_SOURCES)
 DIST_SOURCES = $(libjson_a_SOURCES)
 ETAGS = etags
@@ -156,8 +160,15 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTS = gnu
 noinst_LIBRARIES = libjson.a
-libjson_a_SOURCES = json_spirit_reader.cpp json_spirit_value.cpp
-INCLUDES = -I/opt/local/include/
+libjson_a_SOURCES = \
+									json_spirit.h \
+									json_spirit_reader.h \
+									json_spirit_reader.cpp \
+									json_spirit_value.h \
+									json_spirit_value.cpp \
+									json_spirit_utils.h
+
+AM_CXXFLAGS = -fPIC
 all: all-am
 
 .SUFFIXES:
