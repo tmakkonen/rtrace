@@ -1,6 +1,6 @@
-#include "rtrace.h"
 #include <memory>
 #include <iostream>
+#include "rtrace.h"
 
 using std::cerr;
 using std::cout;

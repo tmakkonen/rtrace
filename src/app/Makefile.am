@@ -6,5 +6,5 @@ rtrace_SOURCES=\
 	rtrace.cpp
 
 AM_CXXFLAGS=-fPIC
-INCLUDES=-I../common/ -I../shapes
+INCLUDES=-I../common/ -I../shapes -I../json_spirit
 AM_LDFLAGS=-L../common -lcommon -L../shapes -lshapes -L../json_spirit -ljson

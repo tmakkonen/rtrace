@@ -1,12 +1,16 @@
 #ifndef RTRACE_SCENEPARSER_H
 #define RTRACE_SCENEPARSER_H
-#include "shapes.h"
+
 #include <string>
 #include <vector>
 #include <sstream>
 
+#include "shapes.h"
+#include <json_spirit.h>
+
+namespace json = json_spirit;
+
 using std::string;
-using std::vector;
 using std::stringstream;
 
 class Scene {
@@ -16,15 +20,7 @@ public:
   struct Material {
     string name;
     float reflection;
-    float diffuse[3];
-
-    // todo remove
-    string str() const {
-      stringstream ss;
-      ss << name << " R:" << reflection << " diffuse:";
-      for (int i = 0; i < 3; i++) ss << diffuse[i] << " ";
-      return ss.str();
-    } 
+    std::vector<double> diffuse;
   };
 
   //! Camera
@@ -41,6 +37,11 @@ public:
     Vector position;
     float intensity[3];
   };
+
+
+  typedef std::vector<Shape*> ShapeList;
+  typedef std::vector<Material> MaterialList;
+  typedef std::vector<Light> LightList;
   
   // ctor
   Scene(const string &scenefile);
@@ -52,22 +53,23 @@ public:
 
   Viewport getViewport() { return m_viewport; }
   Camera getCamera() { return m_cam; }
-  vector<Light> getLights() { return m_lights; }
-  
-  
+  LightList getLights() { return m_lights; }
+    
 private:
   string m_scenefile;
   Viewport m_viewport;
   Camera m_cam;
 
   //! material list
-  vector<Material> m_materials;
+  MaterialList m_materials;
 
   //! shape list
-  vector<Shape> m_shapes;
+  ShapeList m_shapes;
 
   //! light source list
-  vector<Light> m_lights;
+  LightList m_lights;
+
+  void parseObjects(const json::Array &arr);
 
 };
 

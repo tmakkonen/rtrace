@@ -2,7 +2,7 @@
 #define RTRACE_H
 
 #include <string>
-#include "sceneparser.h"
+#include <sceneparser.h>
 
 using std::string;
 

@@ -14,12 +14,14 @@
     ],
 
     "scene" : {
-      "image_width" : 640,
-      "image_height" : 480,
+      "viewport" : {
+        "width" : 640,
+        "height" : 480
+      },
 
       "camera" : {
         "position" : [640, 0, 0],
-        "view_direction" : [0, 0, 0]
+        "direction" : [0, 0, 0]
       },
 
       "objects" : [

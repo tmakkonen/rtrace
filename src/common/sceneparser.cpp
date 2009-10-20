@@ -1,12 +1,11 @@
-#include "sceneparser.h"
-#include "json_spirit.h"
 #include <fstream>
 #include <iostream>
 #include <algorithm>
 #include <boost/lambda/bind.hpp>
 #include <boost/lexical_cast.hpp>
+#include <assert.h>
+#include "sceneparser.h"
 
-namespace json = json_spirit;
 using std::ifstream;
 using std::cout;
 using std::cerr;
@@ -19,6 +18,11 @@ static bool same_name(const json::Pair &p, const string &name) {
   return p.name_ == name;
 }
 
+static Vector get_vector(const json::Array &a) {
+  assert(a.size() == 3);
+
+  return Vector(a[0].get_real(), a[1].get_real(), a[2].get_real());
+}
 
 // json helper:
 // find an Object from the json scene file corresponding to the name
@@ -113,12 +117,52 @@ bool Scene::parse() {
     
     // todo check error
     for(int j = 0; j < 3; j++)
-      mat.diffuse[j] = diffuse[j].get_real();
+      mat.diffuse.push_back(diffuse[j].get_real());
 
     //cout << mat.str() << endl;
     m_materials.push_back(mat);
   }
 
+  // descend into scene
+  json::Object scene = get_value(root, "scene").get_obj();
+
+  // viewport
+  json::Object port = get_value(scene, "viewport").get_obj();
+  m_viewport.width  = get_double(port, "width");
+  m_viewport.height = get_double(port, "height");
+  
+  // camera
+
+  // objects
+  parseObjects(get_value(scene, "objects").get_array());
+  
   return true;
 }
 
+
+void Scene::parseObjects(const json::Array &arr) {
+  for (int i = 0; i < arr.size(); i++) {
+    json::Object o = arr[i].get_obj();
+    string type = get_str(o, "type");
+
+    // create an object based on the object string
+    if (type == "sphere") {
+
+      // check and validate the material
+      string material = get_str(o, "material");
+      MaterialList::iterator it = m_materials.begin();
+      for (; it < m_materials.end(); it++) {
+        if (it->name == material) break;
+      }
+      if (it == m_materials.end()) assert(0); // todo
+
+      // convert to Shape::Material
+     
+      Shape::RGB rgb(it->diffuse);
+
+      Vector v = get_vector(get_value(o, "center").get_array());
+      double rad = get_double(o, "radius");
+      m_shapes.push_back(new Sphere(*it, v, rad));
+    }
+  }
+}
