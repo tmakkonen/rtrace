@@ -9,11 +9,12 @@ public:
   virtual ~Sphere();
 
   // ray-sphere intersection impl.
-  virtual double getIntersection(const Ray &r);
+  virtual bool intersect(const Ray &r, double &t);
 
 private:
   Vector m_center;
   double m_radius;
+  double m_radius_squared; 
 };
 
 #endif

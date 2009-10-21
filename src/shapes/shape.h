@@ -45,7 +45,7 @@ public:
   }
   
   // each child must provide own intersection impl.
-  virtual double getIntersection(const Ray &r) = 0;
+  virtual bool intersect(const Ray &r, double &t) = 0;
   
 protected:
   Material *m_mat;

@@ -3,7 +3,7 @@
     "materials" : [
     {
       "name" : "m1",
-      "diffuse" : [1.0, 1.0, 0.0],
+      "diffuse" : [0.8, 0.7, 0.6],
       "reflection" : 0.5
     },
     {
@@ -27,9 +27,15 @@
       "objects" : [
         { 
           "type" : "sphere",
-          "center" : [233.0, 290.0, 0.0],
-          "size" : 100,
+          "center" : [200.0, 150.0, 0.0],
+          "radius" : 100.0,
           "material" : "m1"
+        },
+        { 
+          "type" : "sphere",
+          "center" : [400, 300, 50],
+          "radius" : 75.0,
+          "material" : "m2"
         }
       ],
 

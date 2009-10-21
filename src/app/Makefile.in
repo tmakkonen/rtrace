@@ -46,7 +46,7 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_rtrace_OBJECTS = main.$(OBJEXT) rtrace.$(OBJEXT)
 rtrace_OBJECTS = $(am_rtrace_OBJECTS)
-rtrace_LDADD = $(LDADD)
+rtrace_DEPENDENCIES = ../common/libcommon.a ../shapes/libshapes.a
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -165,6 +165,7 @@ rtrace_SOURCES = \
 AM_CXXFLAGS = -fPIC
 INCLUDES = -I../common/ -I../shapes -I../json_spirit
 AM_LDFLAGS = -L../common -lcommon -L../shapes -lshapes -L../json_spirit -ljson
+rtrace_LDADD = ../common/libcommon.a ../shapes/libshapes.a
 all: all-am
 
 .SUFFIXES:

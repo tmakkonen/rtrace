@@ -54,7 +54,7 @@ public:
   Viewport getViewport() { return m_viewport; }
   Camera getCamera() { return m_cam; }
   LightList getLights() { return m_lights; }
-    
+  ShapeList getObjects() { return m_shapes; }
 private:
   string m_scenefile;
   Viewport m_viewport;

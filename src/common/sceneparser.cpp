@@ -24,6 +24,7 @@ static Vector get_vector(const json::Array &a) {
   return Vector(a[0].get_real(), a[1].get_real(), a[2].get_real());
 }
 
+
 // json helper:
 // find an Object from the json scene file corresponding to the name
 static const json::Value& get_value(const json::Object &o, string name) {
@@ -128,8 +129,8 @@ bool Scene::parse() {
 
   // viewport
   json::Object port = get_value(scene, "viewport").get_obj();
-  m_viewport.width  = get_double(port, "width");
-  m_viewport.height = get_double(port, "height");
+  m_viewport.width  = get_value(port, "width").get_int();
+  m_viewport.height = get_value(port, "height").get_int();
   
   // camera
 
@@ -157,12 +158,12 @@ void Scene::parseObjects(const json::Array &arr) {
       if (it == m_materials.end()) assert(0); // todo
 
       // convert to Shape::Material
-     
       Shape::RGB rgb(it->diffuse);
+      Shape::Material m(it->reflection, rgb);
 
       Vector v = get_vector(get_value(o, "center").get_array());
-      double rad = get_double(o, "radius");
-      m_shapes.push_back(new Sphere(*it, v, rad));
+      double rad = get_double(o, "radius");      
+      m_shapes.push_back(new Sphere(m, v, rad));
     }
   }
 }
