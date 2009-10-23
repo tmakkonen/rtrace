@@ -8,6 +8,7 @@ public:
   //! direct access to vector data
   Vector origin;
   Vector direction;
+  Ray(): origin(), direction() {}
   
   Ray(const Vector &orig, const Vector &dir) :
     origin(orig), direction(dir) {}

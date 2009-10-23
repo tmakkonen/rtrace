@@ -2,7 +2,8 @@
 #include <iostream>
 #include <stdexcept>
 #include <algorithm>
-#include "rtrace.h"
+#include <rtrace.h>
+#include <rgb.h>
 
 using std::cerr;
 using std::cout;
@@ -27,13 +28,11 @@ RTrace::OutFile::~OutFile() {
 }
 
 
-void RTrace::OutFile::setPixel(const float Rcoeff, const float Gcoeff, const float Bcoeff ) {
-  unsigned char R = (unsigned char)std::min(Rcoeff*255.0, 255.0);
-  unsigned char G = (unsigned char)std::min(Gcoeff*255.0, 255.0);
-  unsigned char B = (unsigned char)std::min(Bcoeff*255.0, 255.0);
-  m_buf.push_back(B);
-  m_buf.push_back(G);
-  m_buf.push_back(R);
+void RTrace::OutFile::setPixel(const RGB &c) {
+  m_buf.push_back((unsigned char)std::min(c.Blue*255.0, 255.0));
+  m_buf.push_back((unsigned char)std::min(c.Green*255.0, 255.0));
+  m_buf.push_back((unsigned char)std::min(c.Red*255.0, 255.0));
+
 }
 
 
@@ -62,9 +61,13 @@ void RTrace::OutFile::Write() const {
 
 
 bool RTrace::Params::validate() {
-  if (file.empty()) {
+  if (scenefile.empty()) {
     cerr << "please define a file name" << endl;
     return false;
+  }
+
+  if (outfile.empty()) {
+    outfile = "out.tga";
   }
   
   return true;
@@ -75,10 +78,93 @@ RTrace::RTrace(Params *params) : m_params(params) {
 }
 
 
+RGB RTrace::traceRay(Ray &ray, Scene *scene) {
+  RGB color(0, 0, 0);
+  double coef = 1.0;
+  int level = 0;
+  Scene::ShapeList shapes = scene->getObjects();
+  
+  do {
+    // find the closest object intersecting with the ray
+    double dist = 2000.0;    
+    Scene::ShapeList::iterator closest = shapes.end();
+    for (Scene::ShapeList::iterator it = shapes.begin(); it < shapes.end(); it++) {
+      if ((*it)->intersect(ray, dist)) 
+        closest = it;
+    }
+
+    if (closest == shapes.end())
+      break;
+        
+    // we found an object intersecting this viewray
+    
+    // get the normal at that point, if supported
+    if ((*closest)->hasNormal()) {
+      
+      // get the intersection point
+      Vector p = ray.origin + ray.direction * dist;            
+      Vector N = (*closest)->getNormal(p);
+      
+      Scene::Material mat = scene->getMaterial((*closest)->getMaterialIndex());
+      
+      // iterate the light sources
+      for (Scene::LightList::iterator l = scene->getLights().begin();
+           l < scene->getLights().end(); l++) {
+
+        Vector dist = l->position - p;
+        if (N * dist <= 0.0) {
+          continue;
+        }
+        
+        double t = sqrtf(dist * dist);
+        if (t <= 0.0)
+          continue;
+        
+        Ray light;
+        light.origin = p;
+        light.direction = dist * (1/t);
+        
+        bool inshadow = false;
+        for(Scene::ShapeList::iterator it = shapes.begin(); it < shapes.end(); it++) {
+          if ((*it)->intersect(light, t)) {          
+            inshadow = true;
+            break;
+          }                  
+        }
+        if (inshadow)
+          continue;
+        
+        // diffuse component
+        double lambert = (light.direction * N) * coef;
+        color += lambert * mat.diffuse * l->intensity;
+        
+        // blinn-phong
+        Vector blinnDirection = light.direction - ray.direction;
+        double temp = sqrtf(blinnDirection * blinnDirection);
+        if (temp != 0.0) {
+          blinnDirection = blinnDirection * (1/temp);
+          double blinnTerm = coef * std::max(blinnDirection * N, 0.0);
+          double power = powf(blinnTerm, mat.power);
+          color += mat.specular * power * l->intensity;
+        }        
+      }
+
+      coef *= mat.reflection;
+      double reflet = 2.0 * (ray.direction * N);
+      ray.origin = p;
+      ray.direction = ray.direction - (N * reflet);
+      level++;
+
+    }    
+  } while (coef > 0.0 && level < 10);
+  
+  return color;
+}
+
 int RTrace::run() {
 
   // load the scene file
-  Scene *scene = new Scene(m_params->file);
+  Scene *scene = new Scene(m_params->scenefile);
   if (!scene->parse()) {
     cout << "scene file parsing failed" << endl;
     return EXIT_FAILURE;
@@ -87,35 +173,19 @@ int RTrace::run() {
   int scene_x = scene->getViewport().width;
   int scene_y = scene->getViewport().height;
   
-  OutFile f("test.tga", scene_x, scene_y);
-
-  Scene::ShapeList shapes = scene->getObjects();
+  OutFile f(m_params->outfile, scene_x, scene_y);
 
   for (int y = 0; y < scene_y; y++) {
     for (int x = 0; x < scene_x; x++) {
-      float red = 0, green = 0, blue = 0;
-
-      // view ray
-      Ray r (Vector(double(x), double(y), -500.0), Vector(0.0, 0.0, 1.0));
-
-      double t = 5000.0;
-      // find the closest object intersecting with the ray
-      Scene::ShapeList::iterator closest = shapes.end();
-      for (Scene::ShapeList::iterator it = shapes.begin(); it < shapes.end(); it++) {
-        if ((*it)->intersect(r, t)) {
-          red = 0.5; green = 0.1; blue = 0.4;
-          closest = it;
-        }
-      }
       
-      if (closest != shapes.end()) {
-        Shape::Material *mat = (*closest)->getMaterial();
-      }
-
-      f.setPixel(red, green, blue);
+      // view ray
+      Ray r (Vector(double(x), double(y), -1000.0), Vector(0.0, 0.0, 1.0));
+      f.setPixel(traceRay(r, scene));
     }
   }
-  
+ 
   f.Write();
+  
+  delete(scene);
   return EXIT_SUCCESS;
 }

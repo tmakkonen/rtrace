@@ -7,7 +7,7 @@
 
 #include "shapes.h"
 #include <json_spirit.h>
-
+#include <rgb.h>
 namespace json = json_spirit;
 
 using std::string;
@@ -20,7 +20,10 @@ public:
   struct Material {
     string name;
     float reflection;
-    std::vector<double> diffuse;
+    int power;
+    RGB diffuse;
+    RGB specular;
+
   };
 
   //! Camera
@@ -35,9 +38,8 @@ public:
 
   struct Light {
     Vector position;
-    float intensity[3];
+    RGB intensity;
   };
-
 
   typedef std::vector<Shape*> ShapeList;
   typedef std::vector<Material> MaterialList;
@@ -51,10 +53,26 @@ public:
   
   bool parse();
 
-  Viewport getViewport() { return m_viewport; }
-  Camera getCamera() { return m_cam; }
-  LightList getLights() { return m_lights; }
-  ShapeList getObjects() { return m_shapes; }
+  Material getMaterial(const int i) {
+    return m_materials[i];
+  }
+  
+  Viewport getViewport() {
+      return m_viewport;
+  }
+    
+  Camera getCamera() {
+    return m_cam;
+  }
+  
+  LightList getLights() {
+    return m_lights;
+  }
+  
+  ShapeList getObjects() {
+    return m_shapes;
+  }
+  
 private:
   string m_scenefile;
   Viewport m_viewport;

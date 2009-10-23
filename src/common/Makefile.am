@@ -4,7 +4,8 @@ libcommon_a_SOURCES=\
 										sceneparser.h \
 										sceneparser.cpp \
 										vector.h \
-										ray.h 
+										ray.h \
+										point.h
 AM_CXXFLAGS=-fPIC
 AM_LDFLAGS=-L../json_spirit/ -ljson -L../shapes/ -lshapes
 INCLUDES=-I../json_spirit/ -I../shapes/

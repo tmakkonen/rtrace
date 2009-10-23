@@ -13,13 +13,16 @@ int main(int argc, char **argv) {
   
   // command line parser
   char ch;
-  while ((ch = getopt(argc, argv, "hs:")) != -1) {
+  while ((ch = getopt(argc, argv, "hs:o:")) != -1) {
     switch(ch) {
       case 'h':
         usage();
         break;
       case 's':
-        params->file = std::string(optarg);
+        params->scenefile = std::string(optarg);
+        break;
+      case 'o':
+        params->outfile = std::string(optarg);
         break;
       default:
         usage();
@@ -28,7 +31,6 @@ int main(int argc, char **argv) {
 
   // check for necessary params
   if (!params->validate()) usage();
- 
 
   RTrace tracer(params);
 

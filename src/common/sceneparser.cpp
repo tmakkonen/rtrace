@@ -5,7 +5,7 @@
 #include <boost/lexical_cast.hpp>
 #include <assert.h>
 #include "sceneparser.h"
-
+#include <rgb.h>
 using std::ifstream;
 using std::cout;
 using std::cerr;
@@ -112,14 +112,18 @@ bool Scene::parse() {
     
     // get material reflection coeff
     mat.reflection = get_double(m, "reflection");
-    
+    mat.power = get_value(m, "power").get_int();
     // get diffuse values
     json::Array diffuse = get_value(m, "diffuse").get_array();
-    
-    // todo check error
-    for(int j = 0; j < 3; j++)
-      mat.diffuse.push_back(diffuse[j].get_real());
+    json::Array specular = get_value(m, "specular").get_array();
 
+    // todo check error
+    assert(diffuse.size() == 3 && specular.size() == 3);
+    mat.diffuse =
+      RGB(diffuse[0].get_real(), diffuse[1].get_real(), diffuse[2].get_real());
+    mat.specular =
+      RGB(specular[0].get_real(), specular[1].get_real(), specular[2].get_real());
+    
     //cout << mat.str() << endl;
     m_materials.push_back(mat);
   }
@@ -136,6 +140,21 @@ bool Scene::parse() {
 
   // objects
   parseObjects(get_value(scene, "objects").get_array());
+
+  // lights
+  json::Array lights = get_value(scene, "lights").get_array();
+  for (int i = 0; i < lights.size(); i++) {
+    json::Object o = lights[i].get_obj();
+
+    Light l;
+    l.position = get_vector(get_value(o, "position").get_array());
+    std::cout << l.position.z << std::endl;
+
+    json::Array intensity = get_value(o, "intensity").get_array();
+    assert(intensity.size() == 3);
+    l.intensity = RGB(intensity[0].get_real(), intensity[1].get_real(), intensity[2].get_real());
+    m_lights.push_back(l);
+  }
   
   return true;
 }
@@ -150,20 +169,19 @@ void Scene::parseObjects(const json::Array &arr) {
     if (type == "sphere") {
 
       // check and validate the material
-      string material = get_str(o, "material");
-      MaterialList::iterator it = m_materials.begin();
-      for (; it < m_materials.end(); it++) {
-        if (it->name == material) break;
+      string material = get_str(o, "material");     
+      int idx = -1;
+      for (int i = 0; i < m_materials.size(); i++) {
+        if (m_materials[i].name == material) {
+          idx = i;
+          break;
+        }
       }
-      if (it == m_materials.end()) assert(0); // todo
-
-      // convert to Shape::Material
-      Shape::RGB rgb(it->diffuse);
-      Shape::Material m(it->reflection, rgb);
+      assert(idx != -1);
 
       Vector v = get_vector(get_value(o, "center").get_array());
       double rad = get_double(o, "radius");      
-      m_shapes.push_back(new Sphere(m, v, rad));
+      m_shapes.push_back(new Sphere(idx, v, rad));
     }
   }
 }

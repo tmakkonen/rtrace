@@ -1,7 +1,7 @@
 #include "sphere.h"
 
-Sphere::Sphere(const Shape::Material &m, const Vector &v, const double rad)
-  : Shape(m), m_center(v) , m_radius(rad), m_radius_squared(rad*rad) {
+Sphere::Sphere(const int i, const Vector &v, const double rad)
+  : Shape(i, Shape::Sphere), m_center(v) , m_radius(rad), m_radius_squared(rad*rad) {
 
 }
 
@@ -21,7 +21,7 @@ bool Sphere::intersect(const Ray &ray, double &t)  {
   double t1 = B + D_sqrt;
 
   bool r = false;
-  if ((t0 > 0.1) && (t0 < 1)) {
+  if ((t0 > 0.1) && (t0 < t)) {
     t = t0;
     r = true;
   }
@@ -31,5 +31,15 @@ bool Sphere::intersect(const Ray &ray, double &t)  {
   }
   
   return r;
+}
+
+
+// the normal vector of a point on a sphere is the connecting vector
+// from the centre to the point normalized to unity.
+Vector Sphere::getNormal(const Vector &v) const {
+  
+  Vector n = v - m_center;
+  n.normalize();
+  return n;  
 }
 

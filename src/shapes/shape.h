@@ -1,54 +1,40 @@
 #ifndef RTRACE_SHAPE_H
 #define RTRACE_SHAPE_H
-#include <ray.h>
 #include <vector>
 #include <cassert>
+#include <ray.h>
+#include <rgb.h>
+
 //! base class for all shapes
 class Shape {
 public:
-  
-  struct RGB {
-    double Red;
-    double Green;
-    double Blue;
-
-    RGB(const std::vector<double> &v) {
-      assert(v.size() == 3);      
-      Red = v[0]; Green = v[1]; Blue = v[2];
-    }
-  };
-
   //! shape type
   typedef enum {
     Sphere
   } Type;
   
-  //! material
-  struct Material {
-    float reflection;
-    RGB diffuse;
-    Material(const float r, RGB &d ) :reflection(r), diffuse(d)  {}
-  };
   
-  Shape(const Material &m) {}
+  Shape(const int i, Type t) : m_material_index(i), m_type(t) {}
+
   virtual ~Shape() {}
 
   Type type() { return m_type; }
   
-  // material getter and setter
-  Material* getMaterial() const {
-    return m_mat;
+  int getMaterialIndex() const {
+    return m_material_index;
   }
-  
-  void setMaterial(Material *m) {
-    m_mat = m;
-  }
-  
-  // each child must provide own intersection impl.
+    
+  //! each child must provide own intersection impl.
   virtual bool intersect(const Ray &r, double &t) = 0;
+
+  // does this shape support the geometric notion
+  // of a normal. default impl returns true.
+  virtual bool hasNormal() const { return true; }
+
+  virtual Vector getNormal(const Vector &v) const = 0;
   
 protected:
-  Material *m_mat;
+  int m_material_index;
   Type m_type;
 };
 

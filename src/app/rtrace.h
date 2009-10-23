@@ -3,6 +3,7 @@
 
 #include <string>
 #include <sceneparser.h>
+#include <rgb.h>
 
 using std::string;
 using std::ofstream;
@@ -12,15 +13,14 @@ public:
 
   //! output file wrapper class
   class OutFile {
-  public:
-    
+  public: 
     OutFile(const string &fname, const unsigned x, const unsigned y);
     ~OutFile();
 
-    void Append(const short *buf, size_t bufzz);
     void Write() const;    
-
-    void setPixel(const float R_coeff, const float G_coeff, const float B_coeff);
+    void setPixel(const RGB &r);
+    void Append(const short *buf, size_t bufzz);
+    
   private:
     FILE *m_file;
     unsigned int m_x;
@@ -32,7 +32,8 @@ public:
   
   //! Parameter structure
   struct Params {
-    string file;
+    string outfile;
+    string scenefile;
     bool validate();
   };
   
@@ -46,6 +47,7 @@ public:
   int run();
   
 private:
+  RGB traceRay(Ray &r, Scene *s);
   
   Params *m_params;
   //  Scene *m_scene;

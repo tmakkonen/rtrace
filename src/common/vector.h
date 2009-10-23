@@ -5,6 +5,7 @@
 
 #include <math.h>
 #include <iostream>
+//#include <point.h>
 
 class Vector {
 public:
@@ -25,12 +26,12 @@ public:
     return *this;
   }
   
-  const Vector operator -(const Vector &rhs) {
+  const Vector operator -(const Vector &rhs) const {
     return Vector(*this) -= rhs;
   }
   
   Vector& operator +=(const Vector &rhs) {
-    x+=rhs.y; y+=rhs.y; z+=rhs.z;
+    x+=rhs.x; y+=rhs.y; z+=rhs.z;
     return *this;
   }
   
@@ -42,7 +43,7 @@ public:
     return x * rhs.x + y * rhs.y + z * rhs.z;
   }
   
-  friend Vector operator *(const Vector&v, double d) {
+  friend Vector operator *(const Vector&v, const double d) {
     return Vector(v.x*d, v.y*d, v.z*d);
   }
   
@@ -51,7 +52,7 @@ public:
   }
   
   void normalize() {
-    double l = x*x+y*y+z*z;
+    double l = x*x + y*y + z*z;
     if (l == 0) return;
     double scale = 1 / sqrt(l);
     x *= scale;
