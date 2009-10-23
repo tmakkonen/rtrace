@@ -177,10 +177,26 @@ int RTrace::run() {
 
   for (int y = 0; y < scene_y; y++) {
     for (int x = 0; x < scene_x; x++) {
-      
-      // view ray
-      Ray r (Vector(double(x), double(y), -1000.0), Vector(0.0, 0.0, 1.0));
-      f.setPixel(traceRay(r, scene));
+
+      RGB color;
+      for (float xf = float(x); xf < x + 1.0; xf += 0.25) {
+        for (float yf = float(y); yf < y + 1.0; yf += 0.25) {
+          float ratio = 0.25;
+          Ray r (Vector(xf, yf, -1000), Vector(0.0, 0.0, 1.0));
+          RGB val = traceRay(r, scene);
+
+          double exposure = -0.3;
+          val.Red = (1.0 - expf(val.Red * exposure)) * ratio;
+          val.Green = (1.0 - expf(val.Green * exposure)) * ratio;
+          val.Blue = (1.0 - expf(val.Blue * exposure)) * ratio;
+
+          color += val;
+          // view ray
+//          Ray r (Vector(double(x), double(y), -1000.0), Vector(0.0, 0.0, 1.0));
+          
+        }
+      }
+      f.setPixel(color);
     }
   }
  
