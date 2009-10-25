@@ -16,6 +16,8 @@ bool Sphere::intersect(const Ray &ray, double &t)  {
   if (D < 0.0)
     return false;
 
+  if (D > -0.000001 && D < 0.000001) return false;
+
   double D_sqrt = sqrtf(D);
   double t0 = B - D_sqrt;
   double t1 = B + D_sqrt;

@@ -70,6 +70,19 @@ Scene::~Scene() {
 }
 
 
+int Scene::getMaterialIdx(const std::string &material) {
+  int idx = -1;
+  for (int i = 0; i < m_materials.size(); i++) {
+    if (m_materials[i].name == material) {
+      idx = i;
+      break;
+    }
+  }
+  assert(idx != -1);
+  return idx;
+}
+
+
 bool Scene::parse() {
 
   // open and read the scene file
@@ -165,21 +178,17 @@ void Scene::parseObjects(const json::Array &arr) {
     string type = get_str(o, "type");
 
     // create an object based on the object string
+    if (type == "plane") {
+      int idx = getMaterialIdx(get_str(o, "material"));
+      Vector n = get_vector(get_value(o, "normal").get_array());
+      double dist = get_double(o, "distance");
+      m_shapes.push_back(new Plane(idx, n, dist));      
+    }
     if (type == "sphere") {
-
-      // check and validate the material
-      string material = get_str(o, "material");     
-      int idx = -1;
-      for (int i = 0; i < m_materials.size(); i++) {
-        if (m_materials[i].name == material) {
-          idx = i;
-          break;
-        }
-      }
-      assert(idx != -1);
-
       Vector v = get_vector(get_value(o, "center").get_array());
-      double rad = get_double(o, "radius");      
+      double rad = get_double(o, "radius");
+      int idx = getMaterialIdx(get_str(o, "material"));
+
       m_shapes.push_back(new Sphere(idx, v, rad));
     }
   }

@@ -10,7 +10,8 @@ class Shape {
 public:
   //! shape type
   typedef enum {
-    Sphere
+    Sphere,
+    Plane
   } Type;
   
   

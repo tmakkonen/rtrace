@@ -5,12 +5,12 @@
 
 #include <math.h>
 #include <iostream>
-//#include <point.h>
+#include <sstream>
 
 class Vector {
 public:
-  Vector(const double x, const float y, const float z) :
-  x(x), y(y), z(z) {}
+  Vector(const double X, const double Y, const double Z) :
+  x(X), y(Y), z(Z) {}
   
   Vector() : x(0), y(0), z(0) {}
   
@@ -54,17 +54,23 @@ public:
   void normalize() {
     double l = x*x + y*y + z*z;
     if (l == 0) return;
-    double scale = 1 / sqrt(l);
+    double scale = 1 / sqrtf(l);
     x *= scale;
     y *= scale;
     z *= scale;
   }
-  
+
   Vector cross_prod(const Vector &v) const {
     return Vector(
       y * v.z - z * v.y,
       z * v.x - x * v.z,
       x * v.y - y * v.x);
+  }
+
+  std::string str() const {
+    std::stringstream ss;
+    ss << "[" << x << ", " << y << ", " << x <<"]";
+    return ss.str();
   }
   
   double x, y, z;

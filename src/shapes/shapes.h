@@ -3,7 +3,7 @@
 #ifndef RTRACE_SHAPES_H
 #define RTRACE_SHAPES_H
 
-#include "Shape.h"
-#include "Sphere.h"
-
+#include "shape.h"
+#include "sphere.h"
+#include "plane.h"
 #endif

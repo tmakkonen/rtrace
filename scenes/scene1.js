@@ -4,7 +4,7 @@
     {
       "name" : "m1",
       "diffuse" : [1.0, 1.0, 0.0],
-      "reflection" : 0.5,
+      "reflection" : 0.7,
       "specular" : [1.0, 1.0, 1.0],
       "power" : 40
 
@@ -12,17 +12,25 @@
     {
       "name" : "m2",
       "diffuse" : [0.0, 1.0, 1.0],
-      "reflection" : 0.5,
+      "reflection" : 0.7,
       "specular" : [1.0, 1.0, 1.0],
       "power" : 30
     },
     {
       "name" : "m3",
       "diffuse" : [1.0, 0.0, 1.0],
-      "reflection" : 0.5,
+      "reflection" : 0.7,
       "specular" : [1.0, 1.0, 1.0],
       "power" : 20
+    },
+    {
+      "name" : "m4",
+      "diffuse" : [0.9, 0.5, 0.2],
+      "reflection" : 0.7,
+      "specular" : [0.1, 0.5, 0.7],
+      "power" : 20
     }
+
     ],
 
     "scene" : {
@@ -39,23 +47,28 @@
       "objects" : [
         { 
           "type" : "sphere",
-          "center" : [230, 290, 0],
+          "center" : [150, 240, 0],
           "radius" : 100.0,
           "material" : "m1"
         },
         { 
           "type" : "sphere",
-          "center" : [407, 290, 0],
+          "center" : [320, 360, 0],
           "radius" : 100.0,
           "material" : "m2"
         },
         {
           "type" : "sphere",
-          "center" : [320, 140, 0],
+          "center" : [490, 240, 0],
           "radius" : 100.0,
           "material" : "m3"
+        },
+        {
+          "type" : "sphere",
+          "center" : [320, 120, 0],
+          "radius" : 100.0,
+          "material" : "m4"
         }
-      
       ],
 
       "lights" : [ 

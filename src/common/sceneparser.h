@@ -89,6 +89,7 @@ private:
 
   void parseObjects(const json::Array &arr);
 
+  int getMaterialIdx(const std::string &name);
 };
 
 #endif

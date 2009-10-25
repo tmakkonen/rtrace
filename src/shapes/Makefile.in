@@ -46,7 +46,7 @@ AR = ar
 ARFLAGS = cru
 libshapes_a_AR = $(AR) $(ARFLAGS)
 libshapes_a_LIBADD =
-am_libshapes_a_OBJECTS = sphere.$(OBJEXT)
+am_libshapes_a_OBJECTS = sphere.$(OBJEXT) plane.$(OBJEXT)
 libshapes_a_OBJECTS = $(am_libshapes_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -163,7 +163,9 @@ libshapes_a_SOURCES = \
 										 shapes.h \
 										 shape.h \
 										 sphere.h \
-										 sphere.cpp
+										 sphere.cpp \
+										 plane.h \
+										 plane.cpp
 
 AM_CXXFLAGS = -fPIC
 INCLUDES = -I../common
@@ -216,6 +218,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/plane.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sphere.Po@am__quote@
 
 .cpp.o:

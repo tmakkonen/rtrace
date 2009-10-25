@@ -4,7 +4,9 @@ libshapes_a_SOURCES= \
 										 shapes.h \
 										 shape.h \
 										 sphere.h \
-										 sphere.cpp
+										 sphere.cpp \
+										 plane.h \
+										 plane.cpp
 AM_CXXFLAGS=-fPIC
 INCLUDES=-I../common
 AM_LDFLAGS=-L../common/ -lcommon
