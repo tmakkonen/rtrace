@@ -5,11 +5,11 @@
 
 class Sphere : public Shape {
 public:
-  Sphere (const int i, const Vector &v, const double rad);
+  Sphere (const int i, const Vector &v, const float rad);
   virtual ~Sphere();
 
   // ray-sphere intersection impl.
-  virtual bool intersect(const Ray &r, double &t);
+  virtual Intersect intersect(const Ray &r, float &t);
 
   virtual bool hasNormal() const { return true; }
 
@@ -17,8 +17,8 @@ public:
   
 private:
   Vector m_center;
-  double m_radius;
-  double m_radius_squared; 
+  float m_radius;
+  float m_radius_squared; 
 };
 
 #endif

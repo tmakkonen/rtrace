@@ -9,7 +9,7 @@
 
 class Vector {
 public:
-  Vector(const double X, const double Y, const double Z) :
+  Vector(const float X, const float Y, const float Z) :
   x(X), y(Y), z(Z) {}
   
   Vector() : x(0), y(0), z(0) {}
@@ -39,22 +39,22 @@ public:
     return Vector(*this) += rhs;
   }
   
-  double operator *(const Vector &rhs) const {
+  float operator *(const Vector &rhs) const {
     return x * rhs.x + y * rhs.y + z * rhs.z;
   }
   
-  friend Vector operator *(const Vector&v, const double d) {
+  friend Vector operator *(const Vector&v, const float d) {
     return Vector(v.x*d, v.y*d, v.z*d);
   }
   
-  double length() const {
+  float length() const {
     return sqrt(x*x + y*y + z*z);
   }
   
   void normalize() {
-    double l = x*x + y*y + z*z;
+    float l = x*x + y*y + z*z;
     if (l == 0) return;
-    double scale = 1 / sqrtf(l);
+    float scale = 1 / sqrtf(l);
     x *= scale;
     y *= scale;
     z *= scale;
@@ -73,7 +73,7 @@ public:
     return ss.str();
   }
   
-  double x, y, z;
+  float x, y, z;
 };
 
 #endif

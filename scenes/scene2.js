@@ -5,29 +5,33 @@
       "name" : "m1",
       "diffuse" : [1.0, 1.0, 0.0],
       "reflection" : 0.2,
+      "refraction" : 0.2,
       "specular" : [1.0, 1.0, 1.0],
       "power" : 40
 
     },
     {
       "name" : "m2",
-      "diffuse" : [0.6, 0.7, 0.7],
-      "reflection" : 0.7,
-      "specular" : [1.0, 1.0, 1.0],
+      "diffuse" : [0.3, 0.2, 0.6],
+      "reflection" : 0.1,
+      "refraction" : 0.2,
+      "specular" : [0.1, 0.1, 0.1],
       "power" :20 
     },
     {
       "name" : "m3",
       "diffuse" : [1.0, 0.0, 1.0],
       "reflection" : 0.3,
+      "refraction" : 0.2,
       "specular" : [1.0, 1.0, 1.0],
       "power" : 20
     },
     {
       "name" : "m4",
-      "diffuse" : [0.9, 0.5, 0.2],
-      "reflection" : 0.7,
-      "specular" : [0.1, 0.5, 0.7],
+      "diffuse" : [0.2, 0.5, 0.2],
+      "refraction" : 0.2,
+      "reflection" : 0.1,
+      "specular" : [0.0, 0.0, 0.0],
       "power" : 20
     }
 
@@ -60,14 +64,18 @@
         {
           "type" : "plane",
           "normal" : [0, 1, 0],
-          "distance" : 800,
+          "distance" : 10,
           "material" : "m2"
         }
       ],
 
       "lights" : [ 
        {
-          "position" : [320, 600, -700.0],
+          "position" : [0, 1000, -700.0],
+          "intensity" : [1.0, 1.0, 1.0]
+        },
+        {
+          "position" : [800, 1000, -700.0],
           "intensity" : [1.0, 1.0, 1.0]
         }
         ]

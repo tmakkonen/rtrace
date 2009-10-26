@@ -14,7 +14,13 @@ public:
     Plane
   } Type;
   
-  
+
+  typedef enum {
+    InPrimitive = -1, 
+    Miss = 0,
+    Hit = 1
+  } Intersect;
+    
   Shape(const int i, Type t) : m_material_index(i), m_type(t) {}
 
   virtual ~Shape() {}
@@ -26,7 +32,7 @@ public:
   }
     
   //! each child must provide own intersection impl.
-  virtual bool intersect(const Ray &r, double &t) = 0;
+  virtual Intersect intersect(const Ray &r, float &t) = 0;
 
   // does this shape support the geometric notion
   // of a normal. default impl returns true.

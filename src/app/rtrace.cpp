@@ -81,17 +81,19 @@ RTrace::RTrace(Params *params) : m_params(params) {
 
 RGB RTrace::traceRay(Ray &ray, Scene *scene) {
   RGB color(0, 0, 0);
-  double coef = 1.0;
+  float coef = 1.0;
   int level = 0;
   Scene::ShapeList shapes = scene->getObjects();
   
   do {
     // find the closest object intersecting with the ray
-    double dist = 100000.0;    
+    float dist = 100000.0;
+    Shape::Intersect result;
     Scene::ShapeList::iterator closest = shapes.end();
     for (Scene::ShapeList::iterator it = shapes.begin(); it < shapes.end(); it++) {
-      if ((*it)->intersect(ray, dist))
-          closest = it;
+      result = (*it)->intersect(ray, dist);
+      if (result != Shape::Miss)
+        closest = it;
     }
     // no hit found, we can terminate the ray
     if (closest == shapes.end())
@@ -115,17 +117,19 @@ RGB RTrace::traceRay(Ray &ray, Scene *scene) {
         Vector L = l->position - p;
 
         L.normalize();
-        if (N * L < 0)
+        if (N * L < 0.0)
           continue;
 
         Ray light;
-        light.origin = p;
+        light.origin = p + L * 0.0001f;
         light.direction = L;
       
         bool inshadow = false;
+
+        // calculate color components for each light source
         for(Scene::ShapeList::iterator it = shapes.begin(); it < shapes.end(); it++) {
-          double t;
-          if ((*it)->intersect(light, t)) {          
+          float  t = 10000.0;
+          if ((*it)->intersect(light, t) != Shape::Miss) {
             inshadow = true;
             break;
           }                  
@@ -134,22 +138,23 @@ RGB RTrace::traceRay(Ray &ray, Scene *scene) {
           continue;
                 
         // diffuse component
-        double lambert = (light.direction * N) * coef;
+        float lambert = (light.direction * N) * coef;
         color += lambert * mat.diffuse * l->intensity;
         
         // blinn-phong
         Vector blinnDirection = light.direction - ray.direction;
-        double temp = sqrtf(blinnDirection * blinnDirection);
+        float temp = sqrtf(blinnDirection * blinnDirection);
         if (temp != 0.0) {
           blinnDirection = blinnDirection * (1/temp);
-          double blinnTerm = coef * std::max(blinnDirection * N, 0.0);
-          double power = powf(blinnTerm, mat.power);
+          float blinnTerm = coef * std::max(blinnDirection * N, (float)0.0);
+          float power = powf(blinnTerm, mat.power);
           color += mat.specular * power * l->intensity;
         }
       }
 
+      // calculate reflection
       coef *= mat.reflection;
-      double reflet = 2.0 * (ray.direction * N);
+      float reflet = 2.0 * (ray.direction * N);
       ray.origin = p;
       ray.direction = ray.direction - (N * reflet);
       level++;
@@ -189,11 +194,11 @@ int RTrace::run() {
 
           RGB val = traceRay(r, scene);
           
-          double exposure = -0.3;
+          float exposure = -0.3;
           val.Red = (1.0 - expf(val.Red * exposure)) * ratio;
           val.Green = (1.0 - expf(val.Green * exposure)) * ratio;
           val.Blue = (1.0 - expf(val.Blue * exposure)) * ratio;
-
+          
           color += val;  
         }
       }

@@ -3,11 +3,9 @@
 
 class RGB {
 public:
-  double Red;
-  double Green;
-  double Blue;
+  float Red, Green, Blue;
 
-  RGB(const double r, const double g, const double b) :
+  RGB(const float r, const float g, const float b) :
     Red(r), Green(g), Blue(b) {}
     
   RGB() : Red(0), Green(0), Blue(0) {}
@@ -19,7 +17,7 @@ public:
     return *this;
   }
     
-  RGB(const std::vector<double> &v) {
+  RGB(const std::vector<float> &v) {
     assert(v.size() == 3);      
     Red = v[0]; Green = v[1]; Blue = v[2];
   }
@@ -28,11 +26,11 @@ public:
     return RGB(Red * rhs.Red, Green*rhs.Green, Blue*rhs.Blue);
   }
 
-  friend RGB operator *(const RGB &c, const double d) {
+  friend RGB operator *(const RGB &c, const float d) {
     return RGB(c.Red*d, c.Green*d, c.Blue*d);
   }
 
-  friend RGB operator *(const double d, const RGB &c) {
+  friend RGB operator *(const float d, const RGB &c) {
     return c * d;
   }
 

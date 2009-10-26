@@ -20,6 +20,7 @@ public:
   struct Material {
     string name;
     float reflection;
+    float refraction;
     int power;
     RGB diffuse;
     RGB specular;

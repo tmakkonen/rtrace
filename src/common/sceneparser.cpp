@@ -51,14 +51,14 @@ static string get_str(const json::Object &o, const string &name) {
 
 
 // json helper
-// get a double value corresponding to the key from the object
-static double get_double(const json::Object &o, const string &name) {
+// get a float value corresponding to the key from the object
+static float get_float(const json::Object &o, const string &name) {
   json::Value v = get_value(o, name);
   if (v.type() != json::real_type) {
     // todo error
   }
 
-  return v.get_real();
+  return static_cast<float>(v.get_real());
 }
 
 
@@ -124,8 +124,10 @@ bool Scene::parse() {
     mat.name = get_str(m, "name");
     
     // get material reflection coeff
-    mat.reflection = get_double(m, "reflection");
+    mat.reflection = get_float(m, "reflection");
     mat.power = get_value(m, "power").get_int();
+    mat.refraction = get_float(m, "refraction");
+    
     // get diffuse values
     json::Array diffuse = get_value(m, "diffuse").get_array();
     json::Array specular = get_value(m, "specular").get_array();
@@ -181,12 +183,12 @@ void Scene::parseObjects(const json::Array &arr) {
     if (type == "plane") {
       int idx = getMaterialIdx(get_str(o, "material"));
       Vector n = get_vector(get_value(o, "normal").get_array());
-      double dist = get_double(o, "distance");
+      float dist = get_float(o, "distance");
       m_shapes.push_back(new Plane(idx, n, dist));      
     }
     if (type == "sphere") {
       Vector v = get_vector(get_value(o, "center").get_array());
-      double rad = get_double(o, "radius");
+      float rad = get_float(o, "radius");
       int idx = getMaterialIdx(get_str(o, "material"));
 
       m_shapes.push_back(new Sphere(idx, v, rad));

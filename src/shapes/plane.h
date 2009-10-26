@@ -10,11 +10,11 @@ public:
     \param normal plane normal vector
     \param dist plane distance
   */
-  Plane (const int i, const Vector &normal,  const double dist);
+  Plane (const int i, const Vector &normal,  const float dist);
   virtual ~Plane() {}
 
   // ray-cylinder intersection impl.
-  virtual bool intersect(const Ray &r, double &t);
+  virtual Intersect intersect(const Ray &r, float &t);
 
   virtual bool hasNormal() const {
     return true;
@@ -26,7 +26,7 @@ public:
   
 private:
   Vector m_N;
-  double m_dist;
+  float m_dist;
 
 };
 
