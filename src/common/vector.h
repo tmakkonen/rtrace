@@ -43,8 +43,12 @@ public:
     return x * rhs.x + y * rhs.y + z * rhs.z;
   }
   
-  friend Vector operator *(const Vector&v, const float d) {
+  friend Vector operator *(const Vector &v, const float d) {
     return Vector(v.x*d, v.y*d, v.z*d);
+  }
+
+  friend Vector operator *(const float d, const Vector &v) {
+    return v * d;
   }
   
   float length() const {

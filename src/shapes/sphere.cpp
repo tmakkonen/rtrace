@@ -8,29 +8,65 @@ Sphere::Sphere(const int i, const Vector &v, const float rad)
 Sphere::~Sphere() {
 }
 
-Shape::Intersect Sphere::intersect(const Ray &ray, float &t)  {
-  Vector dist = m_center - ray.origin;
-  float B = ray.direction * dist;
-  float D = B*B - dist*dist + m_radius_squared;
+Shape::Intersect Sphere::intersect(const Ray &ray, float &dist)  {
 
+  Vector V = ray.origin - m_center;
+  float  B = -(ray.direction * V);
+  float  D = B*B - V*V + m_radius_squared;
+ 
   Shape::Intersect r = Shape::Miss;
   if (D < 0.0)
     return r;
+ 
+  D = sqrtf(D);
+  float t0 = B - D;
+  float t1 = B + D;
 
+  /*
+  if ((t0 > 0.1) && (t0 < dist)) {
+    dist = t0;
+    r = Shape::Hit;
+  }
+  if ((t1 > 0.1) && (t1 < dist)) {
+    dist = t1;  
+    r = Shape::InPrimitive;    
+  }
+          
+  return r;
+  */
+
+
+  /*
+  Vector V = ray.origin - m_center;
+  float B = -(V * ray.direction);
+  float D = B*B - V*V + m_radius_squared;
+  
+  Shape::Intersect r = Shape::Miss;
+  if (D < 0.0)
+    return r;
+ 
   float D_sqrt = sqrtf(D);
   float t0 = B - D_sqrt;
   float t1 = B + D_sqrt;
+  */
+  if (t1 > 0.01f) {
 
-  if ((t0 > 0.1) && (t0 < t)) {
-    t = t0;
-    r = r = Shape::InPrimitive;
+    if (t0 < 0.0f) {
+      if (t1 < dist) {
+        dist = t1;
+        r = Shape::InPrimitive;
+      }
+    }
+    else {
+      if (t0 < dist) {
+        dist = t0;
+        r = Shape::Hit;
+      }
+    }
   }
-  if ((t1 > 0.1) && (t1 < t)) {
-    t = t1;
-    r = Shape::Hit;;
-  }
-  
+    
   return r;
+
 }
 
 

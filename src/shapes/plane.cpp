@@ -2,7 +2,7 @@
 
 Plane::Plane(const int material, const Vector &normal, const float dist)
   : Shape(material, Shape::Plane), m_N(normal), m_dist(dist) {
-  //m_N.normalize();
+  m_N.normalize();
 }
 
 

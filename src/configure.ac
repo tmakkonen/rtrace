@@ -8,7 +8,7 @@ AC_PROG_RANLIB
 AC_PROG_MAKE_SET
 AC_LANG(C++)
 CFLAGS="-O2"
-CXXFLAGS="-O2"
+CXXFLAGS="-O2 -g"
 
 # Checks for libraries.
 

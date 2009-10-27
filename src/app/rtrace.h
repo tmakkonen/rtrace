@@ -47,7 +47,10 @@ public:
   int run();
   
 private:
-  RGB traceRay(Ray &r, Scene *s);
+  float m_X1, m_X2, m_Y1, m_Y2, m_dX, m_dY;
+  void init(Scene *s);
+  
+  void traceRay(Ray &r, Scene *s, RGB &color_acc, float refl, int depth, float &distance);
   
   Params *m_params;
   //  Scene *m_scene;
