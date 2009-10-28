@@ -7,5 +7,6 @@ rtrace_SOURCES=\
 
 AM_CXXFLAGS=-fPIC
 INCLUDES=-I../common/ -I../shapes -I../json_spirit
-AM_LDFLAGS=-L../common -lcommon -L../shapes -lshapes -L../json_spirit -ljson
+AM_LDFLAGS=-L../common -lcommon -L../shapes -lshapes -L../json_spirit -ljson \
+					 -L/opt/local/lib/ -lboost_thread-mt
 rtrace_LDADD= ../common/libcommon.a ../shapes/libshapes.a

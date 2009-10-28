@@ -40,6 +40,10 @@ public:
   struct Light {
     Vector position;
     RGB intensity;
+    Light()
+    : position(0,0,0), intensity(0,0,0) {}
+    Light(Vector v, RGB r)
+    : position(v), intensity(r) {}
   };
 
   typedef std::vector<Shape*> ShapeList;
@@ -66,7 +70,7 @@ public:
     return m_cam;
   }
   
-  LightList getLights() {
+  LightList &getLights() {
     return m_lights;
   }
   

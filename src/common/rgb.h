@@ -1,6 +1,6 @@
 #ifndef RTRACE_RGB_H
 #define RTRACE_RGB_H
-
+#include <sstream>
 class RGB {
 public:
   float Red, Green, Blue;
@@ -43,6 +43,12 @@ public:
     return RGB(*this) += rhs;
   }
 
+  std::string str() const {
+    std::stringstream ss;
+    ss << "[" << Red << ", " << Green << ", " << Blue << "]";
+    return ss.str();
+  }
+  
 };
 
 #endif

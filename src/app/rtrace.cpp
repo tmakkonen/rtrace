@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <rtrace.h>
 #include <rgb.h>
+#include <boost/shared_ptr.hpp>
 
 using std::cerr;
 using std::cout;
@@ -11,34 +12,20 @@ using std::endl;
 
 #define TRACEDEPTH 6
 
+//typedef boost::thread thread;
+typedef boost::shared_ptr<boost::thread> thread_ptr;
+
 template <typename T>
 static void swrite(FILE *f, T value, size_t n = 1) {
   for (int i = 0; i < n; i++) 
     fwrite(&value, sizeof(T), 1, f);
 }
 
-
-RTrace::OutFile::OutFile(const string &fname, const unsigned x, const unsigned y) {
+RTrace::OutFile::OutFile(const string &fname, const unsigned x, const unsigned y,
+  const int chunks) {
   m_file = fopen(fname.c_str(), "wb");
   if (!m_file) throw std::runtime_error("could not open output file");
   m_x = x; m_y = y;
-}
-
-
-RTrace::OutFile::~OutFile() {
-  fclose(m_file);
-}
-
-
-void RTrace::OutFile::setPixel(const RGB &c) {
-  m_buf.push_back((unsigned char)std::min(c.Blue*255.0, 255.0));
-  m_buf.push_back((unsigned char)std::min(c.Green*255.0, 255.0));
-  m_buf.push_back((unsigned char)std::min(c.Red*255.0, 255.0));
-
-}
-
-
-void RTrace::OutFile::Write() const {
   // append TGA header
   // id + color map type
   swrite<char>(m_file, 0, 2);
@@ -56,9 +43,32 @@ void RTrace::OutFile::Write() const {
   swrite<char>(m_file, 24);
   swrite<char>(m_file, 0);
 
+  m_buf.resize(chunks);
+}
+
+
+
+void RTrace::OutFile::add_chunk(int index, std::vector<RGB> &b) {
+  boost::mutex::scoped_lock l(m_mutex);
+  for (int i = 0; i < b.size(); i++) {
+    m_buf[index].push_back(b[i]);
+  }
+}
+
+
+RTrace::OutFile::~OutFile() {
+  fclose(m_file);
+}
+
+
+void RTrace::OutFile::write() const {
   // dump the actual image data buffer to file
-  for (int i = 0; i < m_buf.size(); i++)
-    swrite<unsigned char>(m_file, m_buf[i]);
+  for (int x = 0; x < m_buf.size(); x++)
+    for (int i = 0; i < m_buf[x].size(); i++) {    
+    swrite<unsigned char>(m_file, (unsigned char)std::min(m_buf[x][i].Blue*255.0, 255.0));
+    swrite<unsigned char>(m_file, (unsigned char)std::min(m_buf[x][i].Green*255.0, 255.0));
+    swrite<unsigned char>(m_file, (unsigned char)std::min(m_buf[x][i].Red*255.0, 255.0));
+  }
 }
 
 
@@ -77,11 +87,12 @@ bool RTrace::Params::validate() {
 
 
 RTrace::RTrace(Params *params) : m_params(params) {
+
 }
 
-
-void RTrace::traceRay(Ray &ray, Scene *scene, RGB &color_acc, float refl_index, int trace_depth,
-                      float &distance) {
+  
+void trace(Ray &ray, Scene *scene, RGB &color_acc, float refl_index, int trace_depth,
+           float &distance) {
 
   // recursion end condition
   if (trace_depth > TRACEDEPTH)
@@ -100,11 +111,10 @@ void RTrace::traceRay(Ray &ray, Scene *scene, RGB &color_acc, float refl_index, 
       closest = it;
     }
   }
-  
-  // no hit found, we can terminate the ray
-  if (closest == shapes.end())
-    return;
-  
+
+  // no hit found, we can terminate the ray 
+  if (closest == shapes.end()) return;
+
   if ((*closest)->hasNormal()) {
     
     // get the ray-primitive intersection point
@@ -114,14 +124,15 @@ void RTrace::traceRay(Ray &ray, Scene *scene, RGB &color_acc, float refl_index, 
     Vector N = (*closest)->getNormal(p);
     
     Scene::Material mat = scene->getMaterial((*closest)->getMaterialIndex());
-    
+
     // iterate the light sources
-    for (Scene::LightList::iterator l = scene->getLights().begin();
-         l < scene->getLights().end(); l++) {
+    for (Scene::LightList::iterator it = scene->getLights().begin();
+         it < scene->getLights().end(); it++) {
       
-      Vector L = l->position - p;      
+      Scene::Light l = *it;
+      Vector L = l.position - p;      
       L.normalize();
-      
+
       Ray light;
       light.origin = p + L * 0.0001f;
       light.direction = L;
@@ -145,17 +156,18 @@ void RTrace::traceRay(Ray &ray, Scene *scene, RGB &color_acc, float refl_index, 
         if (dot > 0.0f) {
 
           // add the diffuse component to color accumulator
-          color_acc += dot * mat.diffuse * l->intensity;          
+          color_acc += dot * mat.diffuse * l.intensity;          
         }
 
         // specular component
+
         Vector R = L - 2.0f * dot * N;
         dot = ray.direction * R;
         if (dot > 0.0f) {
           float spec = powf(dot, mat.power);
 
           // add the specular color component to color accumulator
-          color_acc += mat.specular * l->intensity * spec;
+          color_acc += mat.specular * l.intensity * spec;
         }
         
       }
@@ -174,11 +186,11 @@ void RTrace::traceRay(Ray &ray, Scene *scene, RGB &color_acc, float refl_index, 
       RGB reflection_color(0, 0, 0);
 
       // trace the reflection recursively
-      traceRay(r, scene, reflection_color, refl_index, trace_depth + 1, distance);
+      trace(r, scene, reflection_color, refl_index, trace_depth + 1, distance);
       color_acc += refl * reflection_color * mat.specular;
     }
 
-    ///*
+    /*
     // calculate refraction
     float refr = mat.refraction;
     if (refr > 0.0  && trace_depth < TRACEDEPTH) {
@@ -196,7 +208,7 @@ void RTrace::traceRay(Ray &ray, Scene *scene, RGB &color_acc, float refl_index, 
         float dist;
         Ray r(p + T * 0.00001, T);
         
-        traceRay(r, scene, color, rindex, trace_depth + 1, dist);
+        trace(r, scene, color, rindex, trace_depth + 1, dist);
 
         // beer's law
         RGB absorb = mat.specular * 0.15 * -dist;
@@ -208,18 +220,80 @@ void RTrace::traceRay(Ray &ray, Scene *scene, RGB &color_acc, float refl_index, 
     //*/
   }
 }
+         
 
-void RTrace::init(Scene *scene) {
+void go(int id, RTrace::OutFile *f, Scene *s, std::vector<RGB> &buf, int y1, int y2) {
 
-  // TODO:
-  // sceen plane in world coordinates
-  m_X1 = -4, m_X2 = 4, m_Y1 = -3, m_Y2 = 3;
+  int scene_x = s->getViewport().width;
+  int scene_y = s->getViewport().height;
 
-  // interpolation deltas
-  m_dX = (m_X2 - m_X1) / scene->getViewport().width;
-  m_dY = (m_Y2 - m_Y1) / scene->getViewport().height; 
+  // TODO viewport in world coordinates
+  float X1 = -4, X2 = 4, Y1 = -3, Y2 = 3;
+  float dX = (X2 - X1) / scene_x;
+  float dY = (Y2 - Y1) / scene_y;
   
+  Vector origin(0, 0, -5);
+
+  int idx = 0;
+  
+  float Y = Y1 + y1*dY;
+
+  for (int y = y1; y < y2; y++) {
+    float X = X1;
+    
+    for (int x = 0; x < scene_x; x++) {
+
+      //RGB acc;
+      // supersampling for each pixel
+      for (int dx = -1; dx < 2; dx++)
+        for (int dy = -1; dy < 2; dy++) {
+          RGB color;
+          
+          Vector dir = Vector(X + dX * dx / 2.0f, Y + dY * dy / 2.0f, 0) - origin;
+          dir.normalize();
+
+          Ray ray(origin, dir);
+          float dist;
+          trace(ray, s, color, 1.0, 0, dist);
+          
+          // exposure function
+          float ratio = 0.25;
+          float exposure = -0.3;      
+          color.Red = (1.0 - expf(color.Red * exposure)) * ratio;
+          color.Green = (1.0 - expf(color.Green * exposure)) * ratio;
+          color.Blue = (1.0 - expf(color.Blue * exposure)) * ratio;
+
+          buf[idx] += color;
+        }
+
+      idx++;
+      X += dX;
+    }
+    
+    Y += dY;
+  }
+
+  // write our chunk to file.
+  f->add_chunk(id, buf);
 }
+
+
+struct trace_job {
+  int id;
+  int y1;
+  int y2;
+  std::vector<RGB> buf;
+  Scene *s;
+  RTrace::OutFile *f;
+  
+  trace_job(int id, RTrace::OutFile *f, Scene *s, const std::vector<RGB> &b, int y1, int y2) :
+    id(id), f(f), s(s), buf(b), y1(y1), y2(y2) {}
+
+  void operator()() {
+    go(id, f, s, buf, y1, y2);
+  }
+};
+
 
 int RTrace::run() {
 
@@ -230,51 +304,26 @@ int RTrace::run() {
     return EXIT_FAILURE;
   } 
 
-  init(scene);
+  std::vector<thread_ptr> threads;
+
+  std::vector<RGB> buf1(640*480/2);
+  std::vector<RGB> buf2(640*480/2);
 
   int width = scene->getViewport().width;
   int height = scene->getViewport().height;
-  OutFile f(m_params->outfile, width, height);
-
-  Vector origin(0, 0, -5);
-  float Y = m_Y1;
+  OutFile *f = new OutFile(m_params->outfile, width, height, 2);
   
-  for (int y = 0; y < height; y++) {
-    float X = m_X1;
+  threads.push_back(thread_ptr(new boost::thread(trace_job(0, f, scene, buf1, 0, 480/2))));
+  threads.push_back(thread_ptr(new boost::thread(trace_job(1, f, scene, buf2, 480/2+1, 480))));
+                                 
+  for (int i = 0; i < threads.size(); i++) 
+    threads[i]->join();
 
-    for (int x = 0; x < width; x++) {
-      RGB acc;
-      
-      // supersampling for each pixel
-      for (int dx = -1; dx < 2; dx++)
-        for (int dy = -1; dy < 2; dy++) {
-          RGB color;
-          Vector dir = Vector(X + m_dX * dx / 2.0f, Y + m_dY * dy / 2.0f, 0) - origin;
-          dir.normalize();
-          Ray ray(origin, dir);
-          float dist;
-          traceRay(ray, scene, color, 1.0, 0, dist);
-
-          // exposure function
-          float ratio = 0.25;
-          float exposure = -0.3;      
-          color.Red = (1.0 - expf(color.Red * exposure)) * ratio;
-          color.Green = (1.0 - expf(color.Green * exposure)) * ratio;
-          color.Blue = (1.0 - expf(color.Blue * exposure)) * ratio;
-
-          acc += color;            
-        }
-     
-      f.setPixel(acc);
-      X += m_dX;
-    }
-    
-    Y += m_dY;
-  } 
 
   // trace done, write to file
-  f.Write();
-  
+  f->write();
+
   delete(scene);
+  
   return EXIT_SUCCESS;
 }

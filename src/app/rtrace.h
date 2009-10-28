@@ -5,6 +5,9 @@
 #include <sceneparser.h>
 #include <rgb.h>
 
+#include <boost/thread.hpp>
+
+
 using std::string;
 using std::ofstream;
 
@@ -14,18 +17,19 @@ public:
   //! output file wrapper class
   class OutFile {
   public: 
-    OutFile(const string &fname, const unsigned x, const unsigned y);
+    OutFile(const string &fname, const unsigned x, const unsigned y, const int chunks);
     ~OutFile();
 
-    void Write() const;    
-    void setPixel(const RGB &r);
-    void Append(const short *buf, size_t bufzz);
+    void write() const;
+    void add_chunk(int i, std::vector<RGB> &chunk);
     
   private:
     FILE *m_file;
     unsigned int m_x;
     unsigned int m_y;
-    std::vector<unsigned char> m_buf;    
+    std::vector<std::vector<RGB> > m_buf;
+
+    boost::mutex m_mutex;
     OutFile();
   };
   
@@ -47,14 +51,8 @@ public:
   int run();
   
 private:
-  float m_X1, m_X2, m_Y1, m_Y2, m_dX, m_dY;
-  void init(Scene *s);
-  
-  void traceRay(Ray &r, Scene *s, RGB &color_acc, float refl, int depth, float &distance);
-  
+
   Params *m_params;
-  //  Scene *m_scene;
-  
   RTrace() {}
 
 };

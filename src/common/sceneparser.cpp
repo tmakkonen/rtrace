@@ -162,11 +162,12 @@ bool Scene::parse() {
     json::Object o = lights[i].get_obj();
 
     Light l;
-    l.position = get_vector(get_value(o, "position").get_array());
-    
+    l.position = get_vector(get_value(o, "position").get_array());    
     json::Array intensity = get_value(o, "intensity").get_array();
+    
     assert(intensity.size() == 3);
     l.intensity = RGB(intensity[0].get_real(), intensity[1].get_real(), intensity[2].get_real());
+
     m_lights.push_back(l);
   }
   

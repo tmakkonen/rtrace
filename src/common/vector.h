@@ -26,7 +26,7 @@ public:
     return *this;
   }
   
-  const Vector operator -(const Vector &rhs) const {
+  const Vector operator -(const Vector &rhs) const {    
     return Vector(*this) -= rhs;
   }
   
