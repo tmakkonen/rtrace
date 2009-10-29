@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sys/resource.h>
 #include "rtrace.h"
 
 void usage() {
@@ -9,11 +10,12 @@ void usage() {
 
 
 int main(int argc, char **argv) {
-  RTrace::Params *params = new RTrace::Params();;
-  
+  rtrace::traceparams *params = new rtrace::traceparams();
+
+  setpriority(PRIO_PROCESS, 0, 10);
   // command line parser
   char ch;
-  while ((ch = getopt(argc, argv, "hs:o:")) != -1) {
+  while ((ch = getopt(argc, argv, "hs:o:t:v")) != -1) {
     switch(ch) {
       case 'h':
         usage();
@@ -24,7 +26,13 @@ int main(int argc, char **argv) {
       case 'o':
         params->outfile = std::string(optarg);
         break;
-      default:
+      case 't':
+        params->threads = atoi(optarg);
+        break;
+      case 'v':
+        params->verbose = true;
+        break;
+      default:        
         usage();
     }
   }
@@ -32,7 +40,7 @@ int main(int argc, char **argv) {
   // check for necessary params
   if (!params->validate()) usage();
 
-  RTrace tracer(params);
+  rtrace tracer(params);
 
   return tracer.run();
 }

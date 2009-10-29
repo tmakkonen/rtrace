@@ -3,7 +3,9 @@ bin_PROGRAMS=rtrace
 rtrace_SOURCES=\
 	main.cpp \
 	rtrace.h \
-	rtrace.cpp
+	rtrace.cpp \
+	perlin.h \
+	perlin.cpp
 
 AM_CXXFLAGS=-fPIC
 INCLUDES=-I../common/ -I../shapes -I../json_spirit

@@ -5,12 +5,14 @@
 #include <rtrace.h>
 #include <rgb.h>
 #include <boost/shared_ptr.hpp>
+#include <perlin.h>
 
 using std::cerr;
 using std::cout;
 using std::endl;
 
 #define TRACEDEPTH 6
+#define EPSILON 0.001f
 
 //typedef boost::thread thread;
 typedef boost::shared_ptr<boost::thread> thread_ptr;
@@ -21,8 +23,8 @@ static void swrite(FILE *f, T value, size_t n = 1) {
     fwrite(&value, sizeof(T), 1, f);
 }
 
-RTrace::OutFile::OutFile(const string &fname, const unsigned x, const unsigned y,
-  const int chunks) {
+rtrace::tgafile::tgafile(const string &fname, const unsigned x, const unsigned y,
+                         const int chunks) {
   m_file = fopen(fname.c_str(), "wb");
   if (!m_file) throw std::runtime_error("could not open output file");
   m_x = x; m_y = y;
@@ -47,8 +49,7 @@ RTrace::OutFile::OutFile(const string &fname, const unsigned x, const unsigned y
 }
 
 
-
-void RTrace::OutFile::add_chunk(int index, std::vector<RGB> &b) {
+void rtrace::tgafile::add_chunk(int index, std::vector<RGB> &b) {
   boost::mutex::scoped_lock l(m_mutex);
   for (int i = 0; i < b.size(); i++) {
     m_buf[index].push_back(b[i]);
@@ -56,12 +57,12 @@ void RTrace::OutFile::add_chunk(int index, std::vector<RGB> &b) {
 }
 
 
-RTrace::OutFile::~OutFile() {
+rtrace::tgafile::~tgafile() {
   fclose(m_file);
 }
 
 
-void RTrace::OutFile::write() const {
+void rtrace::tgafile::write() const {
   // dump the actual image data buffer to file
   for (int x = 0; x < m_buf.size(); x++)
     for (int i = 0; i < m_buf[x].size(); i++) {    
@@ -72,26 +73,80 @@ void RTrace::OutFile::write() const {
 }
 
 
-bool RTrace::Params::validate() {
+bool rtrace::traceparams::validate() {
   if (scenefile.empty()) {
     cerr << "please define a file name" << endl;
     return false;
-  }
-
-  if (outfile.empty()) {
-    outfile = "out.tga";
   }
   
   return true;
 }
 
 
-RTrace::RTrace(Params *params) : m_params(params) {
+rtrace::rtrace(traceparams *params) : m_params(params) {
 
 }
 
+void shade(Ray &ray, Shape *prim, Vector &pi, Vector &ldir, Scene::Light &light,
+           Scene::Material &m, float coeff, RGB &acc) {
+
+  Vector N = prim->getNormal(pi);
+  float dot = ldir * N;
   
-void trace(Ray &ray, Scene *scene, RGB &color_acc, float refl_index, int trace_depth,
+  // add diffuse component based on material type.
+  switch (m.type) {
+  case Scene::Type_Default:
+  {
+    // diffuse component
+    if (dot > 0) {
+      acc += coeff * dot * m.diffuse1 * light.intensity;
+    }    
+  }    
+  break;
+  case Scene::Type_Turbulence:
+  {
+    float noise = 0.0;
+    for (int level = 1; level < 10; level ++) {
+      float foo[3] = {pi.x * level*5 , pi.y * level*5, pi.z * level*5};
+      noise += (1.0f / level ) 
+        * fabsf(float(textures::perlin::instance().noise3(foo)));
+    }
+    
+    float lambert = dot * coeff;
+    acc+= coeff * (lambert * light.intensity) *
+      (noise * m.diffuse1 + (1.0 - noise) * m.diffuse2);
+  }
+  break;
+  case Scene::Type_Marble:
+  {
+    float noise = 0.0;
+    for (int level = 1; level < 10; level ++) {
+      float foo[3] = {pi.x * level*7 , pi.y * level*7, pi.z * level*7};
+      noise += (1.0f / level ) 
+        * fabsf(float(textures::perlin::instance().noise3(foo)));
+    }
+    
+    float lambert = dot * coeff;
+    noise = 0.5 * sinf((pi.x + pi.y) * 10.0f + noise) + 0.5;
+
+    acc += coeff * (lambert * light.intensity) *
+      (noise * m.diffuse1 + (1.0 - noise) * m.diffuse2);
+
+  }
+  break;
+  } // end switchcase
+
+  // specular component
+  Vector R = ldir - 2.0f * dot * N;
+  dot = ray.direction * R;
+  if (dot > 0.0f) {
+    float spec = coeff * powf(dot, m.power);
+    acc += m.specular * light.intensity * spec;
+  }
+}
+
+
+void trace(Ray &ray, Scene *scene, RGB &color_acc, float refl_coeff, int trace_depth,
            float &distance) {
 
   // recursion end condition
@@ -113,7 +168,8 @@ void trace(Ray &ray, Scene *scene, RGB &color_acc, float refl_index, int trace_d
   }
 
   // no hit found, we can terminate the ray 
-  if (closest == shapes.end()) return;
+  if (closest == shapes.end())
+    return;
 
   if ((*closest)->hasNormal()) {
     
@@ -134,7 +190,7 @@ void trace(Ray &ray, Scene *scene, RGB &color_acc, float refl_index, int trace_d
       L.normalize();
 
       Ray light;
-      light.origin = p + L * 0.0001f;
+      light.origin = p + L * EPSILON;
       light.direction = L;
       
       bool inshadow = false;
@@ -148,30 +204,11 @@ void trace(Ray &ray, Scene *scene, RGB &color_acc, float refl_index, int trace_d
         }                  
       }
 
-      // not in shadow, calculate diffuse and specular color components
-      if (!inshadow) {
-        
-        // diffuse component
-        float dot = L * N;
-        if (dot > 0.0f) {
-
-          // add the diffuse component to color accumulator
-          color_acc += dot * mat.diffuse * l.intensity;          
-        }
-
-        // specular component
-
-        Vector R = L - 2.0f * dot * N;
-        dot = ray.direction * R;
-        if (dot > 0.0f) {
-          float spec = powf(dot, mat.power);
-
-          // add the specular color component to color accumulator
-          color_acc += mat.specular * l.intensity * spec;
-        }
-        
+      // not in shadow, calculate lighting
+      if (!inshadow) {              
+        shade(ray, *closest, p, L, l, mat, refl_coeff, color_acc);
       }
-    } // light source loop end
+    } 
     
     // calculate reflection
     float refl = mat.reflection;
@@ -181,37 +218,37 @@ void trace(Ray &ray, Scene *scene, RGB &color_acc, float refl_index, int trace_d
       Vector R = ray.direction - 2.0f * (ray.direction * N) * N;
 
       // reflection ray, starting form the point of intersection
-      Ray r(p + R*0.00001, R);
+      Ray r(p + R * EPSILON, R);
       
-      RGB reflection_color(0, 0, 0);
+      RGB reflection_color;
 
       // trace the reflection recursively
-      trace(r, scene, reflection_color, refl_index, trace_depth + 1, distance);
+      trace(r, scene, reflection_color, refl_coeff*mat.reflection, trace_depth + 1, distance);
       color_acc += refl * reflection_color * mat.specular;
     }
-
-    /*
+    
     // calculate refraction
+    // TODO not working
     float refr = mat.refraction;
     if (refr > 0.0  && trace_depth < TRACEDEPTH) {
 
       float rindex = 1.5; // TODO
-      float n = refl_index / rindex;
+      float n = refl_coeff / rindex;
       N = N * (float)result;
       float cosI = -(N * ray.direction);
-      float cosT2 = 1.0f - ((N * N) * (1.0f - cosI * cosI));
+      float cosT2 = 1.0f - N * N * (1.0f - cosI * cosI);
       
       if (cosT2 > 0.0) {
         
         Vector T = (n * ray.direction) + (n * cosI - sqrtf(cosT2)) * N;
         RGB color(0, 0, 0);
         float dist;
-        Ray r(p + T * 0.00001, T);
+        Ray r(p + T * EPSILON, T);
         
         trace(r, scene, color, rindex, trace_depth + 1, dist);
 
         // beer's law
-        RGB absorb = mat.specular * 0.15 * -dist;
+        RGB absorb = color * 0.015 * -dist;
         RGB transp(expf(absorb.Red), expf(absorb.Green), expf(absorb.Blue));
 
         color_acc += color * transp;
@@ -222,7 +259,7 @@ void trace(Ray &ray, Scene *scene, RGB &color_acc, float refl_index, int trace_d
 }
          
 
-void go(int id, RTrace::OutFile *f, Scene *s, std::vector<RGB> &buf, int y1, int y2) {
+void do_job(int id, rtrace::tgafile *f, Scene *s, std::vector<RGB> &buf, int y1, int y2) {
 
   int scene_x = s->getViewport().width;
   int scene_y = s->getViewport().height;
@@ -243,30 +280,29 @@ void go(int id, RTrace::OutFile *f, Scene *s, std::vector<RGB> &buf, int y1, int
     
     for (int x = 0; x < scene_x; x++) {
 
-      //RGB acc;
       // supersampling for each pixel
+      RGB color;
       for (int dx = -1; dx < 2; dx++)
         for (int dy = -1; dy < 2; dy++) {
-          RGB color;
           
           Vector dir = Vector(X + dX * dx / 2.0f, Y + dY * dy / 2.0f, 0) - origin;
           dir.normalize();
 
           Ray ray(origin, dir);
           float dist;
+  
           trace(ray, s, color, 1.0, 0, dist);
-          
-          // exposure function
+
+          /*
           float ratio = 0.25;
-          float exposure = -0.3;      
-          color.Red = (1.0 - expf(color.Red * exposure)) * ratio;
-          color.Green = (1.0 - expf(color.Green * exposure)) * ratio;
-          color.Blue = (1.0 - expf(color.Blue * exposure)) * ratio;
-
-          buf[idx] += color;
+          float exposure = -1.0;      
+          t.Red = (1.0 - expf(t.Red * exposure)) * ratio;
+          t.Green = (1.0 - expf(t.Green * exposure)) * ratio;
+          t.Blue = (1.0 - expf(t.Blue * exposure)) * ratio;
+          */
+          
         }
-
-      idx++;
+      buf[idx++] = color*0.11;
       X += dX;
     }
     
@@ -278,24 +314,25 @@ void go(int id, RTrace::OutFile *f, Scene *s, std::vector<RGB> &buf, int y1, int
 }
 
 
+// job structure for a worker thread
 struct trace_job {
-  int id;
-  int y1;
-  int y2;
-  std::vector<RGB> buf;
+  int id; // thread id.
+  int y1; // y start
+  int y2; // y end 
+  std::vector<RGB> buf;  // result buffer.
   Scene *s;
-  RTrace::OutFile *f;
+  rtrace::tgafile *f;
   
-  trace_job(int id, RTrace::OutFile *f, Scene *s, const std::vector<RGB> &b, int y1, int y2) :
+  trace_job(int id, rtrace::tgafile *f, Scene *s, const std::vector<RGB> &b, int y1, int y2) :
     id(id), f(f), s(s), buf(b), y1(y1), y2(y2) {}
 
   void operator()() {
-    go(id, f, s, buf, y1, y2);
+    do_job(id, f, s, buf, y1, y2);
   }
 };
 
 
-int RTrace::run() {
+int rtrace::run() {
 
   // load the scene file
   Scene *scene = new Scene(m_params->scenefile);
@@ -304,23 +341,38 @@ int RTrace::run() {
     return EXIT_FAILURE;
   } 
 
+  int nth = m_params->threads;
+ 
   std::vector<thread_ptr> threads;
 
-  std::vector<RGB> buf1(640*480/2);
-  std::vector<RGB> buf2(640*480/2);
-
+  
   int width = scene->getViewport().width;
   int height = scene->getViewport().height;
-  OutFile *f = new OutFile(m_params->outfile, width, height, 2);
+  std::vector<std::vector<RGB> > bufs(nth);
+  for (int i = 0; i < nth; i++)
+    bufs[i].resize(width *height / nth);
   
-  threads.push_back(thread_ptr(new boost::thread(trace_job(0, f, scene, buf1, 0, 480/2))));
-  threads.push_back(thread_ptr(new boost::thread(trace_job(1, f, scene, buf2, 480/2+1, 480))));
-                                 
-  for (int i = 0; i < threads.size(); i++) 
+
+  tgafile *f = new tgafile(m_params->outfile, width, height, nth);
+
+  for (int i = 0; i < nth; i++) {
+    int start = i*height/nth;
+    int end = start + height/nth;
+    threads.push_back(thread_ptr(new boost::thread(trace_job(i, f, scene, bufs[i], start, end))));
+    if (m_params->verbose)
+      std::cout << "spawned thread #" << i << std::endl;
+  }
+
+  for (int i = 0; i < threads.size(); i++) {
     threads[i]->join();
+    if (m_params->verbose) 
+      std::cout << "joined thread #" << i << std::endl;
+  }
 
+  if (m_params->verbose)
+    std::cout << "trace done, write to file..." << std::endl;
 
-  // trace done, write to file
+  
   f->write();
 
   delete(scene);

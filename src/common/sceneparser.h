@@ -16,13 +16,21 @@ using std::stringstream;
 class Scene {
 public:
 
+  typedef enum {
+    Type_Default = 0, // default uniform color
+    Type_Turbulence,
+    Type_Marble
+  } MaterialType;
+  
   //! Material
   struct Material {
+    MaterialType type;
     string name;
     float reflection;
     float refraction;
     int power;
-    RGB diffuse;
+    RGB diffuse1;
+    RGB diffuse2;
     RGB specular;
 
   };
@@ -74,7 +82,7 @@ public:
     return m_lights;
   }
   
-  ShapeList getObjects() {
+  ShapeList &getObjects() {
     return m_shapes;
   }
   

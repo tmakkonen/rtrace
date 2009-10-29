@@ -129,13 +129,31 @@ bool Scene::parse() {
     mat.refraction = get_float(m, "refraction");
     
     // get diffuse values
-    json::Array diffuse = get_value(m, "diffuse").get_array();
+    json::Array diffuse1 = get_value(m, "diffuse1").get_array();
+    json::Array diffuse2 = get_value(m, "diffuse2").get_array();
+
+    // specular values
     json::Array specular = get_value(m, "specular").get_array();
 
+    // material type
+    std::string type = get_str(m, "type");
+    if (type == "turbulence") 
+      mat.type = Type_Turbulence;
+    else if (type == "marble")
+      mat.type = Type_Marble;
+    else if (type == "default")
+      mat.type = Type_Default;
+    else {
+      std::cout << "invalid material type " << type << std::endl;
+      return false;
+    }
+      
     // todo check error
-    assert(diffuse.size() == 3 && specular.size() == 3);
-    mat.diffuse =
-      RGB(diffuse[0].get_real(), diffuse[1].get_real(), diffuse[2].get_real());
+    assert(diffuse1.size() == 3 && diffuse2.size() == 3 && specular.size() == 3);
+    mat.diffuse1 =
+      RGB(diffuse1[0].get_real(), diffuse1[1].get_real(), diffuse1[2].get_real());
+        mat.diffuse2 =
+      RGB(diffuse2[0].get_real(), diffuse2[1].get_real(), diffuse2[2].get_real());
     mat.specular =
       RGB(specular[0].get_real(), specular[1].get_real(), specular[2].get_real());
     

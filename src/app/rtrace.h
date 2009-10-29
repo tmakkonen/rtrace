@@ -11,17 +11,20 @@
 using std::string;
 using std::ofstream;
 
-class RTrace {
+class rtrace {
 public:
 
   //! output file wrapper class
-  class OutFile {
+  class tgafile {
   public: 
-    OutFile(const string &fname, const unsigned x, const unsigned y, const int chunks);
-    ~OutFile();
+    tgafile(const string &fname, const unsigned x, const unsigned y, const int chunks);
+    ~tgafile();
 
     void write() const;
     void add_chunk(int i, std::vector<RGB> &chunk);
+    std::vector<RGB>& get_chunck(const int idx) {
+      return m_buf[idx];
+    }
     
   private:
     FILE *m_file;
@@ -30,30 +33,33 @@ public:
     std::vector<std::vector<RGB> > m_buf;
 
     boost::mutex m_mutex;
-    OutFile();
+    tgafile();
   };
   
   
   //! Parameter structure
-  struct Params {
+  struct traceparams {
     string outfile;
     string scenefile;
+    int threads;
+    bool verbose;
+    traceparams() : outfile("out.tga"), scenefile(""), threads(1), verbose(false) {}
     bool validate();
   };
   
   //! ctor
-  RTrace(Params *params);
+  rtrace(traceparams *params);
   
   //! dtor
-  ~RTrace() {}
+  ~rtrace() {}
   
   // execute the tracer
   int run();
   
 private:
 
-  Params *m_params;
-  RTrace() {}
+  traceparams *m_params;
+  rtrace() {}
 
 };
 
