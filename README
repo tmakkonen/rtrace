@@ -1,8 +1,6 @@
-rtrace - a ray tracer implementation for my own amusement
+rtrace - a multithreaded ray tracer implementation for my own amusement
 
-TODO: 
-0. scene description language using json
-1. render something simple with brute force
+Builds on Mac with boost libraries installed from macports.
 
 Tuomo Makkonen, 2009
 All files released under the MIT licence. See LICENCE file for details.
